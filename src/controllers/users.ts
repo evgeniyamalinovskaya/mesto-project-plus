@@ -1,32 +1,32 @@
-import { NextFunction, Request, Response } from 'express';
+import { Request, Response } from 'express';
 import User from '../models/user';
-import NotFoundError from '../errors/notFound-error';
-import DefaultError from '../errors/default-error';
+import { BAD_REQUEST_ERROR, NOT_FOUND_ERROR, INTERNAL_SERVER_ERROR } from '../constants/index';
 
 // Возвращает всех пользователей
-export const getAllUsers = (req: Request, res: Response, next: NextFunction) => {
+export const getAllUsers = (req: Request, res: Response) => {
   // Из Get-запроса
   User.find({})
     .then((users) => res.status(200).send({ data: users }))
-    .catch((err) => next(err));
+    .catch ((err) => {
+      return res.status(INTERNAL_SERVER_ERROR).send('На сервере произошла ошибка');
+    });
 };
 
 // Возвращает пользователя по _id
-export const getUserById = (req: Request, res: Response, next: NextFunction) => {
+export const getUserById = (req: Request, res: Response) => {
   // Из Get-запроса
   User.findById(req.params.userId)
     .then((user) => res.status(200).send({ data: user }))
     .catch((err) => {
-      if (err.name === 'CastError') {
-        next(new NotFoundError('Пользователь по указанному _id не найден'));
-      } else {
-        next(err);
+      if (err.name === 'NotFoundError') {
+        return res.status(BAD_REQUEST_ERROR).send('Пользователь по указанному _id не найден');
       }
+      return res.status(INTERNAL_SERVER_ERROR).send('На сервере произошла ошибка');
     });
 };
 
 // Cоздаём пользователя
-export const createUser = (req: Request, res: Response, next: NextFunction) => {
+export const createUser = (req: Request, res: Response) => {
   // вытащили нужные поля из POST-запроса
   const { name, about, avatar } = req.body;
   // передали их объектом в метод модели
@@ -34,15 +34,14 @@ export const createUser = (req: Request, res: Response, next: NextFunction) => {
     .then((user) => res.status(200).send({ data: user }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        next(new DefaultError('Переданы некорректные данные при создании пользователя'));
-      } else {
-        next(err);
+        return res.status(BAD_REQUEST_ERROR).send('Переданы некорректные данные при создании пользователя');
       }
+      return res.status(INTERNAL_SERVER_ERROR).send('На сервере произошла ошибка');
     });
 };
 
 // обновляет профиль
-export const editProfile = (req: any, res: Response, next: NextFunction) => {
+export const editProfile = (req: any, res: Response) => {
   // вытащили нужные поля из PATCH-запроса
   const { name, about } = req.body;
   // передали их объектом в метод модели
@@ -50,18 +49,16 @@ export const editProfile = (req: any, res: Response, next: NextFunction) => {
     .then((user) => res.status(200).send({ data: user }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        next(new DefaultError('Переданы некорректные данные при обновлении профиля'));
+        return res.status(BAD_REQUEST_ERROR).send('Переданы некорректные данные при обновлении профиля');
+      } if (err.name === 'NotFoundError') {
+        return res.status(NOT_FOUND_ERROR).send('Пользователь по указанному _id не найден');
       }
-      if (err.name === 'CastError') {
-        next(new NotFoundError('Пользователь по указанному _id не найден'));
-      } else {
-        next(err);
-      }
+      return res.status(INTERNAL_SERVER_ERROR).send('На сервере произошла ошибка');
     });
 };
 
 // обновляет аватар
-export const editAvatar = (req: any, res: Response, next: NextFunction) => {
+export const editAvatar = (req: any, res: Response) => {
   // вытащили нужные поля из PATCH-запроса
   const { avatar } = req.body;
   // передали их объектом в метод модели
@@ -69,12 +66,11 @@ export const editAvatar = (req: any, res: Response, next: NextFunction) => {
     .then((user) => res.status(200).send({ data: user }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        next(new DefaultError('Переданы некорректные данные для обновления аватара'));
+        return res.status(BAD_REQUEST_ERROR).send('Переданы некорректные данные для обновления аватара');
       }
       if (err.name === 'CastError') {
-        next(new NotFoundError('Пользователь по указанному _id не найден'));
-      } else {
-        next(err);
+        return res.status(NOT_FOUND_ERROR).send('Пользователь по указанному _id не найден');
       }
+      return res.status(INTERNAL_SERVER_ERROR).send('На сервере произошла ошибка');
     });
 };
