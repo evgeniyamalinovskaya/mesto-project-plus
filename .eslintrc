@@ -31,12 +31,23 @@
   },
   "rules": {
     "import/extensions": [
-        "error",
-        "ignorePackages",
+      "error",
+      "ignorePackages",
       {
         "js": "never",
         "ts": "never"
       }
-    ]
+    ],
+    "no-underscore-dangle": [
+      "error",
+      {
+        "allow": [
+          "_id"
+        ]
+      }
+    ],
+    "class-methods-use-this": ["off"],
+    "consistent-return": ["off"],
+    "import/prefer-default-export": ["off"]
   }
 }
