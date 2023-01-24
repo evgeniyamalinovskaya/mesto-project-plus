@@ -34,7 +34,7 @@ export const createUser = (req: Request, res: Response) => {
   const { name, about, avatar } = req.body;
   // передали их объектом в метод модели
   User.create({ name, about, avatar })
-    .then((user) => res.status(200).send({ data: user }))
+    .then((user) => res.status(201).send({ data: user }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
         return res.status(BAD_REQUEST_ERROR).send('Переданы некорректные данные при создании пользователя');
@@ -54,7 +54,7 @@ export const editProfile = (req: any, res: Response) => {
       if (!user) {
         return res.status(NOT_FOUND_ERROR).send('Пользователь по указанному _id не найден');
       }
-      return res.status(201).send({ data: user });
+      return res.status(200).send({ data: user });
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
@@ -75,7 +75,7 @@ export const editAvatar = (req: any, res: Response) => {
       if (!user) {
         return res.status(NOT_FOUND_ERROR).send('Пользователь по указанному _id не найден');
       }
-      return res.status(201).send({ data: user });
+      return res.status(200).send({ data: user });
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
