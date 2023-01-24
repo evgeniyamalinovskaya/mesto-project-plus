@@ -53,7 +53,7 @@ export const likeCard = (req: Request, res: Response) => {
       if (!card) {
         return res.status(NOT_FOUND_ERROR).send('Карточка с указанным _id не найдена');
       }
-      return res.status(201).send({ data: card });
+      return res.status(200).send({ data: card });
     })
     .catch((err) => {
       if (err.name === 'CastError') {
