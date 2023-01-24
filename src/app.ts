@@ -1,4 +1,9 @@
-import express, { json, Request, Response, NextFunction } from 'express';
+import express, {
+  json,
+  Request,
+  Response,
+  NextFunction,
+} from 'express';
 import path from 'path';
 import mongoose from 'mongoose';
 import * as dotenv from 'dotenv';
