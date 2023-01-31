@@ -1,15 +1,17 @@
-import express, {
-  json,
-  Request,
-  Response,
-  NextFunction,
-} from 'express';
+import express, { json } from 'express';
 import path from 'path';
 import mongoose from 'mongoose';
+import { errors } from 'celebrate';
 import * as dotenv from 'dotenv';
 import routes from './routes/index';
-import { RequestCustom } from './middleware/types';
-
+import {
+  createUser,
+  login,
+} from './controllers/users';
+import auth from './middleware/auth';
+import { errorLogger, requestLogger } from './middleware/logger';
+import { errorHandler } from './middleware/errors';
+import { validateLogin, validateUserBody } from './validator/validators';
 // Для подключения
 dotenv.config();
 
@@ -17,20 +19,31 @@ dotenv.config();
 const { PORT = 3000, MONGO_URL = 'mongodb://localhost:27017/mestodb' } = process.env;
 
 const app = express();
+// подключаем логер запросов
+app.use(requestLogger);
 
+// для собирания JSON-формата
 app.use(json());
-
-// временное решение авторизации пользователя
-app.use((req: Request, res: Response, next: NextFunction) => {
-  (req as RequestCustom).user = {
-    _id: '63c995bc49dfa82467a82afd',
-  };
-  next();
-});
 
 app.use(express.static(path.join(__dirname, 'public')));
 
+// все обработчики роутов
+app.post('/signin', validateLogin, login);
+app.post('/signup', validateUserBody, createUser);
+
+// авторизация
+app.use(auth);
+
 app.use(routes);
+
+// подключаем логер ошибок
+app.use(errorLogger);
+
+// обработчик ошибок celebrate
+app.use(errors());
+
+// здесь обрабатываем все ошибки
+app.use(errorHandler);
 
 async function connect() {
   try {
