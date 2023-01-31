@@ -1,83 +1,89 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import Card from '../models/cards';
 import { RequestCustom } from '../middleware/types';
-import { BAD_REQUEST_ERROR, NOT_FOUND_ERROR, INTERNAL_SERVER_ERROR } from '../constants/index';
+import BadRequestError from '../errors/bad-request-error';
+import NotFoundError from '../errors/not-found-error';
+import ForbiddenError from '../errors/forbidden-error';
 
 // возвращает все карточки
-export const getCards = (req: Request, res: Response) => {
+export const getCards = (req: Request, res: Response, next: NextFunction) => {
   // Из Get-запроса
   Card.find({})
     .then((cards) => res.status(200).send({ data: cards }))
-    .catch(() => res.status(INTERNAL_SERVER_ERROR).send('На сервере произошла ошибка'));
+    .catch(next);
 };
 
 // создаёт карточку
-export const createCard = (req: Request, res: Response) => {
+export const createCard = (req: RequestCustom, res: Response, next: NextFunction) => {
   // вытащили нужные поля из POST-запроса
   const { name, link } = req.body;
-  const id = (req as RequestCustom).user!._id;
+  const id = req.user?._id;
   Card.create({ name, link, owner: id })
     .then((card) => res.status(201).send({ data: card }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return res.status(BAD_REQUEST_ERROR).send('Переданы некорректные данные при создании карточки');
+        next(new BadRequestError('Переданы некорректные данные при создании карточки'));
       }
-      return res.status(INTERNAL_SERVER_ERROR).send('На сервере произошла ошибка');
+      next(err);
     });
 };
 
 // удаляет карточку по идентификатору _id
-export const deleteCardById = (req: Request, res: Response) => {
+export const deleteCardById = (req: RequestCustom, res: Response, next: NextFunction) => {
   // вытащили нужные поля из DELETE-запроса
-  Card.findByIdAndDelete(req.params.cardId)
+  Card.findById(req.params.cardId)
     .then((card) => {
       if (!card) {
-        return res.status(NOT_FOUND_ERROR).send('Карточка с указанным _id не найдена');
+        next(new NotFoundError('Карточка с указанным _id не найдена'));
       }
+      if (card && card.owner.toString() !== req.user?._id.toString()) {
+        card.delete();
+        res.send('Карточка удалена');
+      } next(new ForbiddenError('Недостаточно прав для удаления карточки'));
       return res.status(200).send({ data: card });
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        return res.status(BAD_REQUEST_ERROR).send('Переданы некорректные данные при удалении карточки');
+        next(new BadRequestError('Переданы некорректные данные при удалении карточки'));
       }
-      return res.status(INTERNAL_SERVER_ERROR).send('На сервере произошла ошибка');
+      next(err);
     });
 };
 
 // поставить лайк карточке
-export const likeCard = (req: Request, res: Response) => {
-  const id = (req as RequestCustom).user!._id;
+export const likeCard = (req: RequestCustom, res: Response, next: NextFunction) => {
+  const id = req.user?._id;
   // вытащили нужные поля из PUT-запроса
   Card.findByIdAndUpdate(req.params.cardId, { $addToSet: { likes: id } }, { new: true })
     .then((card) => {
       if (!card) {
-        return res.status(NOT_FOUND_ERROR).send('Карточка с указанным _id не найдена');
+        next(new NotFoundError('Карточка с указанным _id не найдена'));
       }
       return res.status(200).send({ data: card });
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        return res.status(BAD_REQUEST_ERROR).send('Переданы некорректные данные для проставления лайка');
+        next(new BadRequestError('Переданы некорректные данные для проставления лайка'));
       }
-      return res.status(INTERNAL_SERVER_ERROR).send('На сервере произошла ошибка');
+      next(err);
     });
 };
 
 // убрать лайк с карточки
-export const dislikeCard = (req: Request, res: Response) => {
-  const id = (req as RequestCustom).user!._id;
+export const dislikeCard = (req: RequestCustom, res: Response, next: NextFunction) => {
+  const id = req.user?._id;
   // вытащили нужные поля из DELETE-запроса
   Card.findByIdAndUpdate(req.params.cardId, { $pull: { likes: id } }, { new: true })
     .then((card) => {
       if (!card) {
-        return res.status(NOT_FOUND_ERROR).send('Карточка с указанным _id не найдена');
+        next(new NotFoundError('Карточка с указанным _id не найдена'));
       }
       return res.status(200).send({ data: card });
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        return res.status(BAD_REQUEST_ERROR).send('Переданы некорректные данные для удаления лайка');
+        next(new BadRequestError('Переданы некорректные данные для удаления лайка'));
       }
-      return res.status(INTERNAL_SERVER_ERROR).send('На сервере произошла ошибка');
+      next(err);
     });
 };
