@@ -55,8 +55,12 @@ export const createUser = (req: Request, res: Response, next: NextFunction) => {
         password: hash,
       },
     ))
-    .then((user) => res.status(201).send({ data: user }))
-    // нужно добавить, что происходило удаление пароля в ответе postman пользователя?!!!!
+    .then((user: any) => {
+      let userCopy = user;
+      userCopy = user.toObject();
+      delete userCopy.password;
+      res.status(201).send({ data: userCopy });
+    })
     .catch((err) => {
       // пользователь пытается зарегистрироваться уже по существующему email
       if (err.code === 11000) {

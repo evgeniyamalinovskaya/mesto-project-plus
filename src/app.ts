@@ -1,5 +1,6 @@
 import express, { json } from 'express';
-import path from 'path';
+import rateLimit from 'express-rate-limit';
+import helmet from 'helmet';
 import mongoose from 'mongoose';
 import { errors } from 'celebrate';
 import * as dotenv from 'dotenv';
@@ -19,13 +20,24 @@ dotenv.config();
 const { PORT = 3000, MONGO_URL = 'mongodb://localhost:27017/mestodb' } = process.env;
 
 const app = express();
+
+// для ограничения количества запросов
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // (здесь за 15 минут)
+  max: 100, // Ограничение каждого IP до 100 запросов на «окно»
+});
+
 // подключаем логер запросов
 app.use(requestLogger);
+
+// Заголовки безопасности Content-Security-Policy
+app.use(helmet());
 
 // для собирания JSON-формата
 app.use(json());
 
-app.use(express.static(path.join(__dirname, 'public')));
+// Применяем ограничения скорости ко всем запросам
+app.use(limiter);
 
 // все обработчики роутов
 app.post('/signin', validateLogin, login);

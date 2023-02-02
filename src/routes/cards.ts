@@ -15,7 +15,7 @@ cardsRouter.get('/', getCards);
 // создаёт карточку
 cardsRouter.post('/', validateCardBody, createCard);
 // удаляет карточку по идентификатору _id
-cardsRouter.delete('/:cardId', deleteCardById);
+cardsRouter.delete('/:cardId', validateCardById, deleteCardById);
 // поставить лайк карточке
 cardsRouter.put('/:cardId/likes', validateCardById, likeCard);
 // убрать лайк с карточки
