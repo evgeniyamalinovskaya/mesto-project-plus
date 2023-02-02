@@ -4,9 +4,7 @@ import { JWT_SECRET } from '../constants/index';
 import UnauthorizedError from '../errors/unauthorized-error';
 import { SessionRequest } from './types';
 
-const extractBearerToken = (header: string ) => {
-  return header.replace('Bearer ', '');
-};
+const extractBearerToken = (header: string) => header.replace('Bearer ', '');
 
 export default (req: SessionRequest, res: Response, next: NextFunction) => {
   // достаём авторизационный заголовок
